@@ -4,7 +4,7 @@
   "description": "VS Code extension to manage scratch files in a VS Code project.",
   "author": "Claudio Spizzi",
   "license": "MIT",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.75.0"
   },
