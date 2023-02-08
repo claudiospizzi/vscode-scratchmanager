@@ -23,3 +23,9 @@ Use the following extension configuration:
 ## Release Notes
 
 Please find the release notes in the [CHANGELOG.md] file.
+
+## Constraint
+
+This software is provided "as is", without any guarantees on the function and operation of the Intex devices. You use it at your own risk. For more details, check the license terms.
+
+Icons created by [Smashicons - Flaticon](https://www.flaticon.com/free-icons/pencil).
