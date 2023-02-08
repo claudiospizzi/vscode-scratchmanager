@@ -4,6 +4,7 @@
   "description": "VS Code extension to manage scratch files in a VS Code project.",
   "icon": "img/scratch-manager.png",
   "author": "Claudio Spizzi",
+  "publisher": "claudiospizzi",
   "license": "MIT",
   "repository": {
     "type": "git",
