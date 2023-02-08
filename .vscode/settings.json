@@ -1,0 +1,11 @@
+{
+    "files.exclude": {
+        "node_modules": true,
+        "out": true
+    },
+    "search.exclude": {
+        "node_modules": true,
+        "out": true
+    },
+    "typescript.tsc.autoDetect": "off"
+}
