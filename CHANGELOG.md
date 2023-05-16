@@ -6,6 +6,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 
+- Add scopes to the scratch manager, defaults to no scopes using the workspace root
 - Add configuration for archive threshold, default to 90 days
 - Add configuration for an auto archive mode, default to off
 

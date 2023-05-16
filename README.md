@@ -17,8 +17,11 @@ VS Code extension to manage scratch files in a VS Code project.
 
 Use the following extension configuration:
 
-* `scratchManager.activeFolder`: Specify the relative path used for new scratch files.
-* `scratchManager.archiveFolder`: Specify the relative path to the scratch file archive.
+* `scratchManager.activeFolder`: Specify the relative path used for new scratch files. Defaults to `Scratch`.
+* `scratchManager.activeScopes`: Specify the scopes to use for new scratch files. Defaults to no scopes, using the workspace root folder.
+* `scratchManager.archiveFolder`: Specify the relative path to the scratch file archive. Defaults to `Scratch`.
+* `scratchManager.archiveThresholdDays`: Specify the number of days to keep scratch files before archiving them. Defaults to 90 days.
+* `scratchManager.archiveAutomatically`: Specify if scratch files should be archived automatically. Defaults to off.
 
 ## Release Notes
 

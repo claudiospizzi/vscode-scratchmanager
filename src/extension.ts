@@ -22,6 +22,19 @@ class ScratchManagerConfiguration {
 	}
 
 	/**
+	 * Get the raw configuration string array.
+	 * @param name Configuration name.
+	 * @returns Configuration array.
+	 */
+	public getConfigurationStringArray(name: string): string[] {
+		let value = vscode.workspace.getConfiguration('scratchManager').get(name) as string[];
+		if (value === null || value === undefined) {
+			throw new Error(`Configuration '${name}' not found in 'scratchManager'.`);
+		}
+		return value;
+	}
+
+	/**
 	 * Get the raw configuration number value.
 	 * @param name Configuration name.
 	 * @returns Configuration value.
@@ -51,7 +64,7 @@ class ScratchManagerConfiguration {
 	 * Get the active folder as full file system path.
 	 * @returns The active folder path.
 	 */
-	public getActiveFolderPath(): string {
+	public getActiveFolderPath(scope: string = ''): string {
 
 		if (vscode.workspace.workspaceFolders === undefined || vscode.workspace.workspaceFolders.length === 0) {
 			throw new Error('Workspace folder is not available.');
@@ -60,14 +73,42 @@ class ScratchManagerConfiguration {
 		const configActiveFolder = this.getConfigurationString('activeFolder');
 		const workspaceFolderPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
 
-		return path.join(workspaceFolderPath, configActiveFolder);
+		return path.join(workspaceFolderPath, scope, configActiveFolder);
+	}
+
+	/**
+	 * Return if the scoping is enabled.
+	 * @returns True if the scoping is enabled.
+	 */
+	public getActiveScopesEnabled(): boolean {
+
+		const scopes = this.getConfigurationStringArray('activeScopes');
+		
+		return scopes.length > 0;
+	}
+
+	/**
+	 * Get the list of scopes.
+	 * @returns The list of scopes.
+	 */
+	public getActiveScopes(): string[] {
+
+		const scopes = this.getConfigurationStringArray('activeScopes');
+
+		// If no scopes are defined, return an empty string to allow the user to
+		// work with files in the root folder.
+		if (scopes.length === 0) {
+			return [ '' ];
+		} else {
+			return scopes;
+		}
 	}
 
 	/**
 	 * Get the archive folder as full file system path.
 	 * @returns The archive folder path.
 	 */
-	public getArchiveFolderPath(): string {
+	public getArchiveFolderPath(scope: string = ''): string {
 
 		if (vscode.workspace.workspaceFolders === undefined || vscode.workspace.workspaceFolders.length === 0) {
 			throw new Error('Workspace folder is not available.');
@@ -76,7 +117,7 @@ class ScratchManagerConfiguration {
 		const configActiveFolder = this.getConfigurationString('archiveFolder');
 		const workspaceFolderPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
 
-		return path.join(workspaceFolderPath, configActiveFolder);
+		return path.join(workspaceFolderPath, scope, configActiveFolder);
 	}
 
 	/**
@@ -247,6 +288,15 @@ export function activate(context: vscode.ExtensionContext) {
 	 */
 	context.subscriptions.push(vscode.commands.registerCommand('scratchManager.createFile', async () => {
 
+		// Get user input: Scope (if required)
+		let scope = undefined;
+		if (configuration.getActiveScopesEnabled()) {
+			scope = await vscode.window.showQuickPick(configuration.getActiveScopes());
+			if (scope === undefined) {
+				return; // Quick pick was canceled with ESC
+			}
+		}
+
 		// Get user input: Template
 		const templateName = await vscode.window.showQuickPick(templateManager.getTemplateNames());
 		if (templateName === undefined) {
@@ -269,7 +319,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		// Gather all details for the scratch file
 		const template = templateManager.getTemplate(templateName);
-		const folderPath = configuration.getActiveFolderPath();
+		const folderPath = configuration.getActiveFolderPath(scope);
 		const fileName = ScratchManagerHelper.getScratchFilename(title, template.extension);
 		const filePath = path.join(folderPath, fileName);
 		const content = ScratchManagerTemplateManager.parseTemplateContent(template, { title: title, username: os.userInfo().username, date: new Date() });
@@ -306,35 +356,39 @@ export function activate(context: vscode.ExtensionContext) {
 
 		console.log(`Date: ${thresholdDate}`);
 
-		const activeFolderPath = configuration.getActiveFolderPath();
-		const archiveFolderPath = configuration.getArchiveFolderPath();
+		const activeScopes = configuration.getActiveScopes();
+		for (let activeScope of activeScopes) {
 
-		// Get all files in the active folder path.
-		const fileNames = await fs.promises.readdir(activeFolderPath);
-		for (let fileName of fileNames) {
+			const activeFolderPath = configuration.getActiveFolderPath(activeScope);
+			const archiveFolderPath = configuration.getArchiveFolderPath(activeScope);
 
-			// Check the files for the pattern with a beginning date.
-			if (fileDetection.test(fileName)) {
+			// Get all files in the active folder path.
+			const fileNames = await fs.promises.readdir(activeFolderPath);
+			for (let fileName of fileNames) {
 
-				const fileDate = new Date(fileName.substring(0, 10));
+				// Check the files for the pattern with a beginning date.
+				if (fileDetection.test(fileName)) {
 
-				// Check if the date of the file is older than the threshold.
-				if (fileDate.getTime() < thresholdDate.getTime()) {
+					const fileDate = new Date(fileName.substring(0, 10));
 
-					const newFolderPath = path.join(archiveFolderPath, fileName.substring(0, 4), fileName.substring(5, 7));
+					// Check if the date of the file is older than the threshold.
+					if (fileDate.getTime() < thresholdDate.getTime()) {
 
-					const filePath = path.join(activeFolderPath, fileName);
-					const newFilePath = path.join(newFolderPath, fileName);
+						const newFolderPath = path.join(archiveFolderPath, fileName.substring(0, 4), fileName.substring(5, 7));
 
-					// Create the archive folder (if required)
-					if (!fs.existsSync(newFolderPath)) {
-						await fs.promises.mkdir(newFolderPath, { recursive: true });
+						const filePath = path.join(activeFolderPath, fileName);
+						const newFilePath = path.join(newFolderPath, fileName);
+
+						// Create the archive folder (if required)
+						if (!fs.existsSync(newFolderPath)) {
+							await fs.promises.mkdir(newFolderPath, { recursive: true });
+						}
+
+						console.log(`Scope: ${activeScope} / File Name: ${fileName} / Date: ${fileDate} / Archive Folder Path: ${newFolderPath} / Move File: ${filePath} => ${newFilePath}`);
+
+						// Move the file to the new folder
+						await fs.promises.rename(filePath, newFilePath);
 					}
-
-					console.log(`File Name: ${fileName} / Date: ${fileDate} / Archive Folder Path: ${newFolderPath} / Move File: ${filePath} => ${newFilePath}`);
-
-					// Move the file to the new folder
-					await fs.promises.rename(filePath, newFilePath);
 				}
 			}
 		}
