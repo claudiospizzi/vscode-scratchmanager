@@ -13,7 +13,7 @@
   "bugs": {
     "url": "https://github.com/claudiospizzi/vscode-scratchmanager/issues"
   },
-  "version": "0.1.0",
+  "version": "0.2.0",
   "engines": {
     "vscode": "^1.75.0"
   },
