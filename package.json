@@ -51,6 +51,16 @@
           "type": "string",
           "description": "Relative path to the folder where existing scratch files are organized.",
           "default": "Scratch"
+        },
+        "scratchManager.archiveThresholdDays": {
+          "type": "number",
+          "description": "Number of days after which a scratch file is archived.",
+          "default": 90
+        },
+        "scratchManager.archiveAutomatically": {
+          "type": "boolean",
+          "description": "Automatically archive scratch files on a regular basis.",
+          "default": false
         }
       }
     }

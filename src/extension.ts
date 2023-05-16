@@ -22,6 +22,32 @@ class ScratchManagerConfiguration {
 	}
 
 	/**
+	 * Get the raw configuration number value.
+	 * @param name Configuration name.
+	 * @returns Configuration value.
+	 */
+	public getConfigurationNumber(name: string): number {
+		let value = vscode.workspace.getConfiguration('scratchManager').get(name) as number;
+		if (value === null || value === undefined) {
+			throw new Error(`Configuration '${name}' not found in 'scratchManager'.`);
+		}
+		return value;
+	}
+
+	/**
+	 * Get the raw configuration boolean value.
+	 * @param name Configuration name.
+	 * @returns Configuration value.
+	 */
+	public getConfigurationBoolean(name: string): boolean {
+		let value = vscode.workspace.getConfiguration('scratchManager').get(name) as boolean;
+		if (value === null || value === undefined) {
+			throw new Error(`Configuration '${name}' not found in 'scratchManager'.`);
+		}
+		return value;
+	}
+
+	/**
 	 * Get the active folder as full file system path.
 	 * @returns The active folder path.
 	 */
@@ -51,6 +77,24 @@ class ScratchManagerConfiguration {
 		const workspaceFolderPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
 
 		return path.join(workspaceFolderPath, configActiveFolder);
+	}
+
+	/**
+	 * Get the archive threshold in days for the scratch files.
+	 * @returns The archive threshold in days.
+	 */
+	public getArchiveThresholdDays(): number {
+
+		return this.getConfigurationNumber('archiveThresholdDays');
+	}
+
+	/**
+	 * Get the archive automatically flag.
+	 * @returns The archive automatically flag.
+	 */
+	public getArchiveAutomatically(): boolean {
+
+		return this.getConfigurationBoolean('archiveAutomatically');
 	}
 }
 
@@ -243,6 +287,11 @@ export function activate(context: vscode.ExtensionContext) {
 		// Create scratch file and show it in the editor
 		await fs.promises.writeFile(filePath, content);
 		vscode.workspace.openTextDocument(vscode.Uri.file(filePath)).then(doc => { vscode.window.showTextDocument(doc); });
+
+		// Archive files automatically if enabled
+		if (configuration.getArchiveAutomatically()) {
+			vscode.commands.executeCommand('scratchManager.archiveFiles');
+		}
 	}));
 
 	/**
@@ -252,7 +301,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		const fileDetection = /^[0-9]{4}-[0-9]{2}-[0-9]{2}_/;
 
-		const thresholdDays = 31;
+		const thresholdDays = configuration.getArchiveThresholdDays();
 		const thresholdDate = new Date(new Date().getTime() - (1000 * 60 * 60 * 24 * thresholdDays));
 
 		console.log(`Date: ${thresholdDate}`);
@@ -276,7 +325,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 					const filePath = path.join(activeFolderPath, fileName);
 					const newFilePath = path.join(newFolderPath, fileName);
-	
+
 					// Create the archive folder (if required)
 					if (!fs.existsSync(newFolderPath)) {
 						await fs.promises.mkdir(newFolderPath, { recursive: true });
@@ -298,7 +347,17 @@ export function activate(context: vscode.ExtensionContext) {
 
 		const templateConfigPath = templateManager.getConfigPath();
 		vscode.workspace.openTextDocument(vscode.Uri.file(templateConfigPath)).then(doc => { vscode.window.showTextDocument(doc); });
+
+		// Archive files automatically if enabled
+		if (configuration.getArchiveAutomatically()) {
+			vscode.commands.executeCommand('scratchManager.archiveFiles');
+		}
 	}));
+
+	// Archive files automatically if enabled
+	if (configuration.getArchiveAutomatically()) {
+		vscode.commands.executeCommand('scratchManager.archiveFiles');
+	}
 
 	console.log('[ScratchManager] Extension activation completed');
 }
