@@ -23,6 +23,12 @@ Use the following extension configuration:
 * `scratchManager.archiveThresholdDays`: Specify the number of days to keep scratch files before archiving them. Defaults to 90 days.
 * `scratchManager.archiveAutomatically`: Specify if scratch files should be archived automatically. Defaults to off.
 
+## Folder Structure
+
+When using no scopes (activeScopes configuration is empty), the following path will be constructed with the following schema: `<WorkspaceFolder>/<ActiveFolder>`.
+
+If the scoping options is used, the following schema will be used: `<WorkspaceFolder>/<ActiveScope>/<ActiveFolder>`. The create file command will ask the user for the scope to use. The archive files command will archive all files from all scopes older than the threshold days.
+
 ## Release Notes
 
 Please find the release notes in the [CHANGELOG.md] file.
